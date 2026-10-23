@@ -1,0 +1,514 @@
+<!doctype html>
+<html lang="es">
+<head>
+<title>Biblioteca de casa</title>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Literata:opsz,wght@7..72,500;7..72,700&family=Instrument+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@500&display=swap">
+<style>
+/* Catálogo de consulta rápida: cabecera fija con buscador, lista densa de fichas, tejuelos con el código de estante */
+:root{
+  --bg:#eef1f3; --surface:#ffffff; --ink:#1b2a33; --muted:#5d6d77; --line:#d5dde2;
+  --accent:#1f5f6b; --accent-soft:#dcebee; --warn:#b4660a; --warn-soft:#fbecd6;
+  --ok:#2f7a4a; --ok-soft:#dff0e4; --loan:#6a4fa0; --loan-soft:#ebe5f6;
+  --tag:#f4e9c8; --tag-ink:#4a3b10;
+  --c1:#1f5f6b; --c2:#c0782a; --c3:#6a4fa0; --c4:#2f7a4a; --c5:#8a9399;
+  --f-display:"Literata", Georgia, "Times New Roman", serif;
+  --f-body:"Instrument Sans", system-ui, -apple-system, "Segoe UI", sans-serif;
+  --f-code:"IBM Plex Mono", ui-monospace, Menlo, Consolas, monospace;
+}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){
+  --bg:#12191d; --surface:#1a2328; --ink:#e3eaee; --muted:#93a3ac; --line:#2c3a41;
+  --accent:#7cc2cf; --accent-soft:#1d363c; --warn:#f0a648; --warn-soft:#3a2a12;
+  --ok:#7fcf98; --ok-soft:#183324; --loan:#b9a2ec; --loan-soft:#2a2340;
+  --tag:#3b3420; --tag-ink:#f1e2b0; --c1:#7cc2cf; --c2:#e9a35a; --c3:#b9a2ec; --c4:#7fcf98; --c5:#8f9ca3; color-scheme:dark }}
+:root[data-theme="dark"]{
+  --bg:#12191d; --surface:#1a2328; --ink:#e3eaee; --muted:#93a3ac; --line:#2c3a41;
+  --accent:#7cc2cf; --accent-soft:#1d363c; --warn:#f0a648; --warn-soft:#3a2a12;
+  --ok:#7fcf98; --ok-soft:#183324; --loan:#b9a2ec; --loan-soft:#2a2340;
+  --tag:#3b3420; --tag-ink:#f1e2b0; --c1:#7cc2cf; --c2:#e9a35a; --c3:#b9a2ec; --c4:#7fcf98; --c5:#8f9ca3; color-scheme:dark }
+*{box-sizing:border-box}
+body{margin:0}
+[hidden]{display:none!important}
+img{max-width:100%}
+body{background:var(--bg);color:var(--ink);font-family:var(--f-body);font-size:15px;line-height:1.45}
+body::before{content:"";position:fixed;inset:0 0 auto;height:env(safe-area-inset-top,0px);z-index:10;background:var(--surface)}
+.wrap{max-width:860px;margin:0 auto;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px))}
+header{position:sticky;top:env(safe-area-inset-top,0px);z-index:5;background:var(--surface);border-bottom:1px solid var(--line)}
+header .wrap{padding-block:12px 0;display:flex;flex-direction:column;gap:10px}
+.brand{display:flex;align-items:baseline;justify-content:space-between;gap:12px;flex-wrap:wrap}
+h1{font-family:var(--f-display);font-weight:700;font-size:1.35rem;margin:0;letter-spacing:-.01em}
+.stats{color:var(--muted);font-size:.85rem;font-variant-numeric:tabular-nums}
+.searchrow{display:flex;gap:8px}
+input,select,textarea{font:inherit;color:var(--ink);background:var(--bg);border:1px solid var(--line);border-radius:8px;padding:9px 11px;min-width:0}
+input:focus-visible,select:focus-visible,textarea:focus-visible,button:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+#q{flex:1;font-size:16px;padding:11px 13px;background:var(--surface)}
+button{font:inherit;cursor:pointer;border-radius:8px;border:1px solid var(--line);background:var(--surface);color:var(--ink);padding:9px 13px}
+.primary{background:var(--accent);border-color:var(--accent);color:var(--surface);font-weight:600}
+.tabs{display:flex;gap:4px}
+.tab{border:0;border-bottom:3px solid transparent;border-radius:0;background:none;padding:8px 10px;color:var(--muted);font-weight:500}
+.tab[aria-selected="true"]{color:var(--ink);border-bottom-color:var(--accent)}
+.badge{display:inline-block;min-width:1.4em;padding:0 6px;border-radius:99px;background:var(--warn);color:var(--surface);font-size:.75rem;font-weight:600;text-align:center;margin-left:4px}
+main .wrap{padding-block:14px 48px;display:flex;flex-direction:column;gap:12px}
+.filters{display:grid;grid-template-columns:repeat(auto-fill,minmax(130px,1fr));gap:8px}
+.filters label{display:flex;flex-direction:column;gap:3px;font-size:.72rem;text-transform:uppercase;letter-spacing:.06em;color:var(--muted)}
+.filters select{font-size:.9rem;padding:7px 8px;text-transform:none;letter-spacing:0}
+.resbar{display:flex;align-items:center;gap:8px;flex-wrap:wrap;color:var(--muted);font-size:.88rem}
+.chip{display:inline-flex;align-items:center;gap:6px;background:var(--accent-soft);color:var(--ink);border:0;border-radius:99px;padding:4px 10px;font-size:.85rem}
+ul.list{list-style:none;margin:0;padding:0;background:var(--surface);border:1px solid var(--line);border-radius:10px;overflow:hidden}
+.book{display:grid;grid-template-columns:auto 1fr;gap:12px;padding:11px 14px;border-top:1px solid var(--line);cursor:pointer;align-items:start}
+.book:first-child{border-top:0}
+.book:hover{background:var(--bg)}
+.book.flag{box-shadow:inset 4px 0 0 var(--warn)}
+.tejuelo{font-family:var(--f-code);font-size:.74rem;font-weight:500;background:var(--tag);color:var(--tag-ink);border-radius:4px;padding:4px 6px;line-height:1.15;text-align:center;min-width:78px;margin-top:2px}
+.book .t{font-family:var(--f-display);font-weight:500;font-size:1.02rem;line-height:1.25}
+.book .a{color:var(--ink)}
+.book .m{color:var(--muted);font-size:.84rem;margin-top:2px}
+.pills{display:flex;gap:6px;flex-wrap:wrap;margin-top:5px}
+.pill{font-size:.75rem;border-radius:99px;padding:2px 8px;font-weight:500}
+.p-ok{background:var(--ok-soft);color:var(--ok)}
+.p-loan{background:var(--loan-soft);color:var(--loan)}
+.p-warn{background:var(--warn-soft);color:var(--warn)}
+.p-sign{background:var(--tag);color:var(--tag-ink)}
+.more{align-self:center}
+.empty{background:var(--surface);border:1px dashed var(--line);border-radius:10px;padding:22px;color:var(--muted);text-align:center}
+.zone h2{font-family:var(--f-display);font-size:1.1rem;margin:6px 0 8px}
+.shelves{display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:10px}
+.shelf{background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:12px;display:flex;flex-direction:column;gap:6px}
+.shelf .top{display:flex;justify-content:space-between;align-items:center;gap:8px}
+.shelf .exp{font-size:.85rem;color:var(--muted)}
+.shelf .acts{display:flex;gap:6px;flex-wrap:wrap;margin-top:auto}
+.shelf .acts button{padding:6px 10px;font-size:.85rem}
+.alert{background:var(--surface);border:1px solid var(--line);border-left:4px solid var(--warn);border-radius:10px;padding:12px 14px;display:flex;flex-direction:column;gap:6px}
+.alert .why{font-size:.88rem;color:var(--muted)}
+.alert .acts{display:flex;gap:8px;flex-wrap:wrap}
+.alert .acts button{padding:7px 11px;font-size:.88rem}
+.sheet-bg{position:fixed;inset:0;background:rgb(0 0 0 / .45);z-index:20;display:flex;align-items:flex-end;justify-content:center}
+.sheet{background:var(--surface);width:100%;max-width:560px;max-height:92%;overflow:auto;border-radius:14px 14px 0 0;padding:18px max(16px,env(safe-area-inset-right,0px)) calc(18px + env(safe-area-inset-bottom,0px)) max(16px,env(safe-area-inset-left,0px));display:flex;flex-direction:column;gap:12px}
+@media (min-width:640px){.sheet-bg{align-items:center}.sheet{border-radius:14px}}
+.sheet h3{font-family:var(--f-display);margin:0;font-size:1.15rem}
+.form{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.form label{display:flex;flex-direction:column;gap:4px;font-size:.78rem;color:var(--muted);min-width:0}
+.form .full{grid-column:1/-1}
+.form .check{flex-direction:row;align-items:center;gap:8px;font-size:.95rem;color:var(--ink)}
+.form .check input{width:20px;height:20px}
+.hint{font-size:.8rem;color:var(--warn)}
+.sheet .acts{display:flex;gap:8px;flex-wrap:wrap;justify-content:flex-end}
+.danger{color:var(--warn);border-color:var(--warn)}
+.toast{position:fixed;left:50%;transform:translateX(-50%);bottom:calc(16px + env(safe-area-inset-bottom,0px));background:var(--ink);color:var(--surface);padding:9px 14px;border-radius:8px;z-index:30;font-size:.9rem}
+.ro{font-size:.82rem;color:var(--muted)}
+.tabs{overflow-x:auto;white-space:nowrap;scrollbar-width:none}
+.tiles{display:grid;grid-template-columns:repeat(auto-fit,minmax(118px,1fr));gap:8px}
+.tile{background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:10px 12px}
+.tile b{display:block;font-family:var(--f-display);font-size:1.6rem;font-weight:700;line-height:1.1;font-variant-numeric:tabular-nums}
+.tile span{font-size:.75rem;text-transform:uppercase;letter-spacing:.06em;color:var(--muted)}
+.sgrid{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,360px),1fr));gap:12px}
+.card{background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:14px;display:flex;flex-direction:column;gap:4px;min-width:0}
+.card h2{font-family:var(--f-display);font-size:1.05rem;margin:0 0 6px;display:flex;justify-content:space-between;gap:8px;align-items:baseline}
+.card h2 small{font-family:var(--f-body);font-size:.8rem;color:var(--muted);font-weight:400}
+.card h4{margin:8px 0 2px;font-size:.75rem;text-transform:uppercase;letter-spacing:.06em;color:var(--muted);font-weight:600}
+.bar{display:grid;grid-template-columns:minmax(0,40%) 1fr 2.6em;gap:10px;align-items:center;width:100%;border:0;background:none;padding:5px 6px;text-align:left;border-radius:6px;color:var(--ink)}
+.bar:hover{background:var(--bg)}
+.bl{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:.9rem}
+.bt{height:12px;background:var(--accent-soft);border-radius:3px;overflow:hidden;display:flex}
+.bf{height:100%;background:var(--accent)}
+.bf.ok{background:var(--ok)} .bf.rest{background:transparent}
+.bn{font-variant-numeric:tabular-nums;text-align:right;font-size:.9rem;font-weight:600}
+.stack{display:flex;height:26px;border-radius:6px;overflow:hidden;gap:2px;margin:4px 0 8px}
+.stack button{border:0;border-radius:0;padding:0;min-width:4px}
+.legend{display:flex;flex-wrap:wrap;gap:6px 14px;font-size:.88rem}
+.legend button{border:0;background:none;padding:2px 0;display:inline-flex;align-items:center;gap:6px;color:var(--ink)}
+.sw{width:10px;height:10px;border-radius:2px;display:inline-block}
+.linkbtn{align-self:flex-start;border:0;background:none;color:var(--accent);padding:6px;font-weight:600}
+@media (max-width:420px){.form{grid-template-columns:1fr}.tejuelo{min-width:66px}}
+@media (prefers-reduced-motion:no-preference){.book,.tab{transition:background .12s}}
+</style>
+</head>
+<body>
+
+<header>
+  <div class="wrap">
+    <div class="brand"><h1>Biblioteca de casa</h1><span class="stats"><span id="stats">Cargando…</span> · <span id="upd"></span></span></div>
+    <div class="searchrow">
+      <input id="q" type="search" placeholder="Buscar título o autor" autocomplete="off" aria-label="Buscar título o autor">
+      <button class="primary" id="addBtn" hidden>Añadir</button>
+    </div>
+    <nav class="tabs" role="tablist">
+      <button class="tab" role="tab" id="tab-libros" aria-selected="true">Libros</button>
+      <button class="tab" role="tab" id="tab-estantes" aria-selected="false">Estantes</button>
+      <button class="tab" role="tab" id="tab-avisos" aria-selected="false">Fuera de sitio<span class="badge" id="nAvisos" hidden>0</span></button>
+      <button class="tab" role="tab" id="tab-stats" aria-selected="false">Estadísticas</button>
+    </nav>
+  </div>
+</header>
+
+<main>
+  <div class="wrap">
+    <section id="v-libros">
+      <div class="filters" id="filters"></div>
+      <div class="resbar" id="resbar"></div>
+      <div id="listBox"></div>
+    </section>
+    <section id="v-estantes" hidden></section>
+    <section id="v-avisos" hidden></section>
+    <section id="v-stats" hidden style="display:flex;flex-direction:column;gap:12px"></section>
+  </div>
+</main>
+<div id="sheetHost"></div>
+
+<script>
+(function(){
+const ZONAS={BUH:"Buhardilla",SAL:"Salón",DES:"Despacho"};
+const BLOQUES=["Novela","Cuento","Poesía","Ensayo","Teatro","Historia","Crónica y viajes","Memorias y biografía"];
+const AMBITOS=["Latinoamericana","Española","Europea","Anglosajona"];
+const IDIOMAS=["Español","Inglés","Italiano","Catalán","Otro"];
+const CODE_RE=/^(BUH-C\d+-B\d+|SAL-B\d+|DES-B\d+)$/;
+
+let db=null, canWrite=false, loaded=false, downloads=null;
+const shelves=new Map(); // code -> {ambitos,paises,libros}
+const S={view:"libros",q:"",f:{bloque:"",ambito:"",pais:"",idioma:"",zona:"",estado:""},estante:"",autor:"",limit:150,allAuthors:false};
+const splitAut=s=>(s||"").split(/\s*;\s*/).map(x=>x.trim()).filter(Boolean);
+
+const $=s=>document.querySelector(s);
+const norm=s=>(s||"").toString().normalize("NFD").replace(/[̀-ͯ]/g,"").toLowerCase().trim();
+const esc=s=>(s??"").toString().replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+const zonaDe=code=>(code||"").split("-")[0];
+const cmpCode=(a,b)=>{const za=Object.keys(ZONAS).indexOf(zonaDe(a)),zb=Object.keys(ZONAS).indexOf(zonaDe(b));if(za!==zb)return za-zb;return a.localeCompare(b,"es",{numeric:true})};
+const newId=()=>"b"+Date.now().toString(36)+Math.random().toString(36).slice(2,6);
+
+function toast(msg){const t=document.createElement("div");t.className="toast";t.textContent=msg;document.body.appendChild(t);setTimeout(()=>t.remove(),2200)}
+
+function allBooks(){const out=[];for(const [code,s] of shelves){for(const b of (s.libros||[]))out.push({...b,ubicacion:code})}return out}
+
+function misplaced(b){
+  if(b.excepcion)return null;
+  const s=shelves.get(b.ubicacion); if(!s)return null;
+  const am=(s.ambitos||[]).map(norm), pa=(s.paises||[]).map(norm);
+  const reasons=[];
+  if(am.length&&!am.includes(norm(b.ambito)))reasons.push("ámbito");
+  if(pa.length&&!pa.includes(norm(b.pais)))reasons.push("país");
+  return reasons.length?reasons:null;
+}
+function suggest(b){
+  let best=null,bestScore=-1;
+  for(const [code,s] of shelves){
+    if(code===b.ubicacion)continue;
+    const am=(s.ambitos||[]).map(norm), pa=(s.paises||[]).map(norm);
+    const fitsExp=(!am.length||am.includes(norm(b.ambito)))&&(pa.length?pa.includes(norm(b.pais)):false);
+    const same=(s.libros||[]).filter(x=>norm(x.pais)===norm(b.pais)&&norm(x.ambito)===norm(b.ambito)).length;
+    const score=(fitsExp?1000:0)+same;
+    if((fitsExp||same>0)&&score>bestScore){best=code;bestScore=score}
+  }
+  return best;
+}
+
+/* ---------- writes ---------- */
+const queues=new Map();
+function writeShelf(code){
+  const s=shelves.get(code);
+  const body={zona:zonaDe(code),ambitos:s.ambitos||[],paises:s.paises||[],libros:s.libros||[]};
+  const prev=queues.get(code)||Promise.resolve();
+  const p=prev.then(()=>db.doc("estantes/"+code).set(body)).catch(e=>{
+    if(e&&e.code==="invalid_argument"){canWrite=false;render();toast("No tienes permiso para guardar cambios")}
+    else if(e&&e.code==="quota_exceeded")toast("La base de datos está llena");
+    else toast("No se pudo guardar. Revisa la conexión y vuelve a intentarlo");
+  });
+  queues.set(code,p);return p;
+}
+function ensureShelf(code){if(!shelves.has(code))shelves.set(code,{ambitos:[],paises:[],libros:[]});return shelves.get(code)}
+async function saveBook(oldCode,book){
+  const {ubicacion,...data}=book;
+  const target=ensureShelf(ubicacion);
+  const i=target.libros.findIndex(x=>x.id===data.id);
+  target.libros=i>=0?target.libros.map(x=>x.id===data.id?data:x):[...target.libros,data];
+  await writeShelf(ubicacion);
+  if(oldCode&&oldCode!==ubicacion&&shelves.has(oldCode)){
+    const s=shelves.get(oldCode);s.libros=s.libros.filter(x=>x.id!==data.id);await writeShelf(oldCode);
+  }
+  render();
+}
+async function deleteBook(code,id){const s=shelves.get(code);s.libros=s.libros.filter(x=>x.id!==id);render();await writeShelf(code)}
+
+/* ---------- render ---------- */
+function options(list,cur,label){return `<option value="">${label}</option>`+list.map(v=>`<option${v===cur?" selected":""}>${esc(v)}</option>`).join("")}
+function uniq(arr){return [...new Set(arr.filter(Boolean))].sort((a,b)=>a.localeCompare(b,"es"))}
+
+function renderFilters(books){
+  const bl=uniq([...BLOQUES,...books.map(b=>b.bloque)]);
+  const am=uniq([...AMBITOS,...books.map(b=>b.ambito)]);
+  const pa=uniq(books.filter(b=>!S.f.ambito||b.ambito===S.f.ambito).map(b=>b.pais));
+  const idi=uniq([...IDIOMAS,...books.map(b=>b.idioma)]);
+  const f=S.f;
+  $("#filters").innerHTML=`
+   <label>Bloque<select id="f-bloque">${options(bl,f.bloque,"Todos")}</select></label>
+   <label>Ámbito<select id="f-ambito">${options(am,f.ambito,"Todos")}</select></label>
+   <label>País<select id="f-pais">${options(pa,f.pais,"Todos")}</select></label>
+   <label>Idioma<select id="f-idioma">${options(idi,f.idioma,"Todos")}</select></label>
+   <label>Zona<select id="f-zona"><option value="">Todas</option>${Object.entries(ZONAS).map(([k,v])=>`<option value="${k}"${k===f.zona?" selected":""}>${v}</option>`).join("")}</select></label>
+   <label>Estado<select id="f-estado">${[["","Todos"],["leido","Leídos"],["noleido","Sin leer"],["firmado","Firmados"]].map(([k,v])=>`<option value="${k}"${k===f.estado?" selected":""}>${v}</option>`).join("")}</select></label>`;
+  for(const k of Object.keys(f)){$("#f-"+k).onchange=e=>{S.f[k]=e.target.value;if(k==="ambito")S.f.pais="";S.limit=150;render()}}
+}
+
+function bookRow(b){
+  const mp=misplaced(b);
+  const meta=[b.bloque,b.pais||b.ambito,b.idioma].filter(Boolean).map(esc).join(" · ");
+  const pills=[];
+  if(b.leido)pills.push(`<span class="pill p-ok">Leído</span>`);
+  if(b.firmado)pills.push(`<span class="pill p-sign">✒ Firmado</span>`);
+  if(b.prestadoA)pills.push(`<span class="pill p-loan">Prestado a ${esc(b.prestadoA)}</span>`);
+  if(mp)pills.push(`<span class="pill p-warn">¿Fuera de sitio? (${mp.join(" y ")})</span>`);
+  return `<li class="book${mp?" flag":""}" data-code="${esc(b.ubicacion)}" data-id="${esc(b.id)}" tabindex="0">
+    <div class="tejuelo">${esc(b.ubicacion)}</div>
+    <div style="min-width:0"><div class="t">${esc(b.titulo)}</div><div class="a">${esc(b.autor)}</div><div class="m">${meta}</div>${pills.length?`<div class="pills">${pills.join("")}</div>`:""}</div></li>`;
+}
+function bindRows(root){root.querySelectorAll(".book").forEach(li=>{const go=()=>openBook(li.dataset.code,li.dataset.id);li.onclick=go;li.onkeydown=e=>{if(e.key==="Enter")go()}})}
+
+function renderLibros(books){
+  renderFilters(books);
+  const words=norm(S.q).split(/\s+/).filter(Boolean);
+  const f=S.f;
+  let r=books.filter(b=>{
+    if(S.estante&&b.ubicacion!==S.estante)return false;
+    if(S.autor&&!splitAut(b.autor).includes(S.autor))return false;
+    if(f.bloque&&b.bloque!==f.bloque)return false;
+    if(f.ambito&&b.ambito!==f.ambito)return false;
+    if(f.pais&&b.pais!==f.pais)return false;
+    if(f.idioma&&b.idioma!==f.idioma)return false;
+    if(f.zona&&zonaDe(b.ubicacion)!==f.zona)return false;
+    if(f.estado==="leido"&&!b.leido)return false;
+    if(f.estado==="noleido"&&b.leido)return false;
+    if(f.estado==="prestado"&&!b.prestadoA)return false;
+    if(f.estado==="firmado"&&!b.firmado)return false;
+    if(words.length){const h=norm(b.titulo+" "+b.autor);if(!words.every(w=>h.includes(w)))return false}
+    return true;
+  });
+  r.sort((a,b)=>S.estante?0:(norm(a.autor).localeCompare(norm(b.autor))||norm(a.titulo).localeCompare(norm(b.titulo))));
+  const active=Object.values(f).some(Boolean)||S.estante||S.autor||words.length;
+  $("#resbar").innerHTML=`<span>${r.length} ${r.length===1?"libro":"libros"}</span>`+
+    (S.estante?`<button class="chip" id="clrEst">Estante ${esc(S.estante)} ✕</button>`:"")+
+    (S.autor?`<button class="chip" id="clrAut">${esc(S.autor)} ✕</button>`:"")+
+    (active?`<button class="chip" id="clrAll">Quitar filtros</button>`:"");
+  if($("#clrEst"))$("#clrEst").onclick=()=>{S.estante="";render()};
+  if($("#clrAut"))$("#clrAut").onclick=()=>{S.autor="";render()};
+  if($("#clrAll"))$("#clrAll").onclick=()=>{S.estante="";S.autor="";S.q="";$("#q").value="";for(const k in S.f)S.f[k]="";render()};
+  const box=$("#listBox");
+  if(!loaded){box.innerHTML=`<div class="empty">Cargando el catálogo…</div>`;return}
+  if(!books.length){box.innerHTML=`<div class="empty">Aún no hay libros. Envía a Claude la foto de una balda, o usa «Añadir».</div>`;return}
+  if(!r.length){box.innerHTML=`<div class="empty">${words.length?`No tienes ningún libro que coincida con «${esc(S.q)}».`:"Ningún libro cumple estos filtros."}</div>`;return}
+  box.innerHTML=`<ul class="list">${r.slice(0,S.limit).map(bookRow).join("")}</ul>`+(r.length>S.limit?`<div style="text-align:center;margin-top:10px"><button id="moreBtn">Mostrar ${Math.min(150,r.length-S.limit)} más</button></div>`:"");
+  bindRows(box);
+  if($("#moreBtn"))$("#moreBtn").onclick=()=>{S.limit+=150;render()};
+}
+
+function renderEstantes(){
+  const host=$("#v-estantes");
+  const codes=[...shelves.keys()].sort(cmpCode);
+  if(!codes.length){host.innerHTML=`<div class="empty">Todavía no hay estantes. Se crean al cargar la primera balda.</div>`;return}
+  let html="";
+  for(const [z,name] of Object.entries(ZONAS)){
+    const cs=codes.filter(c=>zonaDe(c)===z); if(!cs.length)continue;
+    html+=`<div class="zone"><h2>${name}</h2><div class="shelves">`+cs.map(c=>{
+      const s=shelves.get(c),n=(s.libros||[]).length;
+      const nf=(s.libros||[]).filter(b=>misplaced({...b,ubicacion:c})).length;
+      const exp=[(s.ambitos||[]).join(", "),(s.paises||[]).join(", ")].filter(Boolean).join(" › ");
+      return `<div class="shelf"><div class="top"><span class="tejuelo">${esc(c)}</span><span class="stats">${n} ${n===1?"libro":"libros"}</span></div>
+        <div class="exp">${exp?"Esperado: "+esc(exp):"Sin clasificación esperada"}</div>
+        ${nf?`<span class="pill p-warn" style="align-self:flex-start">${nf} fuera de sitio</span>`:""}
+        <div class="acts"><button data-see="${esc(c)}">Ver libros</button>${canWrite?`<button data-edit="${esc(c)}">Editar esperado</button>`:""}</div></div>`}).join("")+`</div></div>`;
+  }
+  if(downloads)html+=`<div class="card" style="margin-top:14px"><h2>Copia de seguridad</h2>
+    <p class="ro" style="margin:0 0 6px">Descarga todo el catálogo en tu dispositivo. Guarda una copia de vez en cuando, por ejemplo al terminar cada columna.</p>
+    <div class="acts" style="display:flex;gap:8px;flex-wrap:wrap"><button class="primary" id="expCsv">Descargar para Excel (.csv)</button><button id="expJson">Descargar copia completa (.json)</button></div></div>`;
+  host.innerHTML=html;
+  if($("#expCsv"))$("#expCsv").onclick=()=>exportar("csv");
+  if($("#expJson"))$("#expJson").onclick=()=>exportar("json");
+  host.querySelectorAll("[data-see]").forEach(b=>b.onclick=()=>{S.estante=b.dataset.see;setView("libros")});
+  host.querySelectorAll("[data-edit]").forEach(b=>b.onclick=()=>openShelf(b.dataset.edit));
+}
+
+function renderAvisos(books){
+  const host=$("#v-avisos");
+  const fl=books.filter(b=>misplaced(b)).sort((a,b)=>cmpCode(a.ubicacion,b.ubicacion));
+  if(!fl.length){host.innerHTML=`<div class="empty">Todos los libros están en su sitio. Si colocas uno de otro país o ámbito en una balda, aparecerá aquí.</div>`;return}
+  host.innerHTML=`<p class="ro" style="margin:0">${fl.length} ${fl.length===1?"libro no encaja":"libros no encajan"} con lo esperado en su estante. Tú decides si moverlos.</p>`+fl.map(b=>{
+    const s=shelves.get(b.ubicacion),sug=suggest(b),mp=misplaced(b);
+    return `<div class="alert"><div><b style="font-family:var(--f-display)">${esc(b.titulo)}</b> · ${esc(b.autor)}</div>
+      <div class="why">Está en <span class="tejuelo" style="display:inline-block;min-width:0">${esc(b.ubicacion)}</span>, que espera ${esc([(s.ambitos||[]).join(", "),(s.paises||[]).join(", ")].filter(Boolean).join(" › "))}. Este libro es ${esc([b.ambito,b.pais].filter(Boolean).join(" › "))} (no encaja el ${mp.join(" ni el ")}).</div>
+      <div class="why">${sug?`Balda sugerida: <b>${esc(sug)}</b>`:"Aún no hay ninguna balda para este país."}</div>
+      ${canWrite?`<div class="acts">${sug?`<button class="primary" data-move="${esc(b.ubicacion)}|${esc(b.id)}|${esc(sug)}">Ya lo he movido a ${esc(sug)}</button>`:""}<button data-keep="${esc(b.ubicacion)}|${esc(b.id)}">Dejarlo aquí</button><button data-open="${esc(b.ubicacion)}|${esc(b.id)}">Editar</button></div>`:""}</div>`}).join("");
+  host.querySelectorAll("[data-move]").forEach(btn=>btn.onclick=async()=>{const [c,id,to]=btn.dataset.move.split("|");const b=getBook(c,id);await saveBook(c,{...b,ubicacion:to});toast("Movido a "+to)});
+  host.querySelectorAll("[data-keep]").forEach(btn=>btn.onclick=async()=>{const [c,id]=btn.dataset.keep.split("|");const b=getBook(c,id);await saveBook(c,{...b,excepcion:true,notas:[b.notas,"Colocado aquí a propósito"].filter(Boolean).join(". ")});toast("Se queda en "+c)});
+  host.querySelectorAll("[data-open]").forEach(btn=>btn.onclick=()=>{const [c,id]=btn.dataset.open.split("|");openBook(c,id)});
+}
+
+async function exportar(kind){
+  const day=new Date().toISOString().slice(0,10);
+  let filename,data;
+  if(kind==="csv"){
+    const cols=["titulo","autor","ubicacion","bloque","ambito","pais","idioma","leido","firmado","prestadoA","prestadoDesde","notas"];
+    const head=["Título","Autor","Estante","Bloque","Ámbito","País","Idioma","Leído","Firmado","Prestado a","Prestado desde","Notas"];
+    const cell=v=>{if(v===true)return "Sí";if(v===false||v==null)return v===false?"No":"";const s=String(v);return /[;"\n]/.test(s)?'"'+s.replace(/"/g,'""')+'"':s};
+    const rows=allBooks().sort((a,b)=>cmpCode(a.ubicacion,b.ubicacion)).map(b=>cols.map(c=>cell(c==="leido"||c==="firmado"?!!b[c]:b[c])).join(";"));
+    data="﻿"+[head.join(";"),...rows].join("\r\n");filename=`biblioteca-${day}.csv`;
+  }else{
+    const est={};for(const c of [...shelves.keys()].sort(cmpCode))est[c]=shelves.get(c);
+    data=JSON.stringify({exportado:new Date().toISOString(),libros:allBooks().length,estantes:est},null,2);filename=`biblioteca-${day}.json`;
+  }
+  try{await downloads.save({filename,data});toast("Copia descargada")}
+  catch(e){if(e&&e.code==="declined")return;if(e&&e.code==="rate_limited")toast("Espera un momento y vuelve a intentarlo");else toast("No se pudo descargar en este dispositivo")}
+}
+function tally(arr){const m=new Map();for(const k of arr){if(!k)continue;m.set(k,(m.get(k)||0)+1)}return [...m].sort((a,b)=>b[1]-a[1]||a[0].localeCompare(b[0],"es"))}
+function barRow(label,n,max,go,extra){return `<button class="bar" data-go="${esc(JSON.stringify(go))}" title="Ver ${esc(label)}"><span class="bl">${esc(label)}</span><span class="bt"><span class="bf" style="width:${max?(n/max*100).toFixed(1):0}%"></span></span><span class="bn">${n}</span></button>`}
+
+function renderStats(books){
+  const host=$("#v-stats");
+  if(!loaded){host.innerHTML=`<div class="empty">Cargando…</div>`;return}
+  if(!books.length){host.innerHTML=`<div class="empty">Las estadísticas aparecerán cuando haya libros en el catálogo.</div>`;return}
+  const N=books.length;
+  const autores=tally(books.flatMap(b=>splitAut(b.autor)));
+  const paises=tally(books.map(b=>b.pais));
+  const leidos=books.filter(b=>b.leido).length, prest=books.filter(b=>b.prestadoA).length;
+  const pct=x=>Math.round(x/N*100);
+  let h=`<div class="tiles">
+    <div class="tile"><b>${N}</b><span>Libros</span></div>
+    <div class="tile"><b>${autores.length}</b><span>Autores</span></div>
+    <div class="tile"><b>${paises.length}</b><span>Países</span></div>
+    <div class="tile"><b>${pct(leidos)}%</b><span>Leídos</span></div>
+    <div class="tile"><b>${books.filter(b=>b.firmado).length}</b><span>Firmados</span></div></div><div class="sgrid">`;
+
+  const bl=tally(books.map(b=>b.bloque||"Sin bloque"));
+  h+=`<div class="card"><h2>Por bloque <small>${bl.length} bloques</small></h2>${bl.map(([k,n])=>barRow(k,n,bl[0][1],{f:{bloque:k}})).join("")}</div>`;
+
+  const am=tally(books.map(b=>b.ambito||"Sin ámbito"));
+  const pmax=paises.length?paises[0][1]:1;
+  h+=`<div class="card"><h2>Por país <small>agrupado por ámbito</small></h2>`+am.map(([a,na])=>{
+    const ps=tally(books.filter(b=>(b.ambito||"Sin ámbito")===a).map(b=>b.pais||"Sin país"));
+    return `<h4>${esc(a)} · ${na}</h4>`+ps.map(([p,n])=>barRow(p,n,pmax,{f:{ambito:a==="Sin ámbito"?"":a,pais:p==="Sin país"?"":p}})).join("")}).join("")+`</div>`;
+
+  const id=tally(books.map(b=>b.idioma||"Otro"));
+  const col=i=>`var(--c${Math.min(i+1,5)})`;
+  h+=`<div class="card"><h2>Por idioma <small>${id.length} ${id.length===1?"idioma":"idiomas"}</small></h2>
+    <div class="stack">${id.map(([k,n],i)=>`<button data-go="${esc(JSON.stringify({f:{idioma:k}}))}" style="flex:${n};background:${col(i)}" aria-label="${esc(k)}: ${n}"></button>`).join("")}</div>
+    <div class="legend">${id.map(([k,n],i)=>`<button data-go="${esc(JSON.stringify({f:{idioma:k}}))}"><span class="sw" style="background:${col(i)}"></span>${esc(k)} <b>${n}</b> <span class="ro">${pct(n)}%</span></button>`).join("")}</div></div>`;
+
+  const shown=S.allAuthors?autores:autores.slice(0,15);
+  h+=`<div class="card"><h2>Por autor <small>${autores.length} autores</small></h2>${shown.map(([k,n])=>barRow(k,n,autores[0][1],{autor:k})).join("")}
+    ${autores.length>15?`<button class="linkbtn" id="allAut">${S.allAuthors?"Ver solo los 15 primeros":"Ver los "+autores.length+" autores"}</button>`:""}<p class="ro" style="margin:4px 0 0">Los libros con dos autores cuentan para cada uno.</p></div>`;
+
+  const codes=[...shelves.keys()].sort(cmpCode);
+  const cnt=codes.map(c=>(shelves.get(c).libros||[]).length), emax=Math.max(1,...cnt);
+  h+=`<div class="card"><h2>Por estante <small>${codes.length} ${codes.length===1?"estante":"estantes"}</small></h2>`+Object.entries(ZONAS).map(([z,name])=>{
+    const cs=codes.filter(c=>zonaDe(c)===z);if(!cs.length)return "";
+    return `<h4>${name}</h4>`+cs.map(c=>barRow(c,(shelves.get(c).libros||[]).length,emax,{estante:c})).join("")}).join("")+`</div>`;
+
+  h+=`<div class="card"><h2>Leídos por bloque <small>${leidos} de ${N}</small></h2>`+bl.map(([k,n])=>{
+    const l=books.filter(b=>(b.bloque||"Sin bloque")===k&&b.leido).length;
+    return `<button class="bar" data-go="${esc(JSON.stringify({f:{bloque:k,estado:l<n?"noleido":""}}))}" title="${l<n?"Ver los que faltan por leer":"Ver "+esc(k)}"><span class="bl">${esc(k)}</span><span class="bt"><span class="bf ok" style="width:${(l/n*100).toFixed(1)}%"></span></span><span class="bn">${l}/${n}</span></button>`}).join("")+
+    `<p class="ro" style="margin:4px 0 0">Toca un bloque para ver los que te quedan por leer.</p></div></div>`;
+
+  host.innerHTML=h;
+  host.querySelectorAll("[data-go]").forEach(el=>el.onclick=()=>{
+    const g=JSON.parse(el.dataset.go);
+    for(const k in S.f)S.f[k]="";Object.assign(S.f,g.f||{});
+    S.autor=g.autor||"";S.estante=g.estante||"";S.q="";$("#q").value="";S.limit=150;setView("libros");
+  });
+  if($("#allAut"))$("#allAut").onclick=()=>{S.allAuthors=!S.allAuthors;render()};
+}
+
+function render(){
+  const books=allBooks();
+  const nf=books.filter(b=>misplaced(b)).length;
+  $("#stats").textContent=loaded?`${books.length} libros · ${shelves.size} ${shelves.size===1?"estante":"estantes"}`:"Cargando…";
+  const bd=$("#nAvisos");bd.hidden=!nf;bd.textContent=nf;
+  $("#addBtn").hidden=!canWrite;
+  if(S.view==="libros")renderLibros(books);
+  if(S.view==="estantes")renderEstantes();
+  if(S.view==="avisos")renderAvisos(books);
+  if(S.view==="stats")renderStats(books);
+}
+function setView(v){S.view=v;for(const x of ["libros","estantes","avisos","stats"]){$("#v-"+x).hidden=x!==v;$("#tab-"+x).setAttribute("aria-selected",x===v)}render();window.scrollTo(0,0)}
+
+/* ---------- sheets ---------- */
+function getBook(code,id){const b=(shelves.get(code)?.libros||[]).find(x=>x.id===id);return b?{...b,ubicacion:code}:null}
+function closeSheet(){$("#sheetHost").innerHTML=""}
+function sheet(html){$("#sheetHost").innerHTML=`<div class="sheet-bg" id="sbg"><div class="sheet" role="dialog" aria-modal="true">${html}</div></div>`;$("#sbg").onclick=e=>{if(e.target.id==="sbg")closeSheet()}}
+document.addEventListener("keydown",e=>{if(e.key==="Escape")closeSheet()});
+
+function dl(id,list){return `<datalist id="${id}">${list.map(v=>`<option value="${esc(v)}">`).join("")}</datalist>`}
+
+function openBook(code,id){
+  const b=id?getBook(code,id):{id:newId(),titulo:"",autor:"",ubicacion:S.estante||"",bloque:"Novela",ambito:"",pais:"",idioma:"Español",notas:"",leido:false,prestadoA:"",prestadoDesde:""};
+  if(!b)return;
+  const books=allBooks();
+  if(!canWrite){
+    sheet(`<h3>${esc(b.titulo)}</h3><div>${esc(b.autor)}</div><div class="ro">${esc([b.bloque,b.ambito,b.pais,b.idioma].filter(Boolean).join(" · "))}</div><div><span class="tejuelo" style="display:inline-block">${esc(b.ubicacion)}</span>${b.firmado?` <span class="pill p-sign">✒ Firmado</span>`:""}</div>${b.notas?`<div>${esc(b.notas)}</div>`:""}<div class="acts"><button id="xClose">Cerrar</button></div>`);
+    $("#xClose").onclick=closeSheet;return;
+  }
+  const mp=id?misplaced(b):null;
+  sheet(`<h3>${id?"Ficha del libro":"Añadir libro"}</h3>
+  ${mp?`<div class="pill p-warn" style="align-self:flex-start">¿Fuera de sitio? Sugerida: ${esc(suggest(b)||"sin balda para este país")}</div>`:""}
+  <form class="form" id="bf" autocomplete="off">
+    <label class="full">Título<input id="b-titulo" required value="${esc(b.titulo)}"></label>
+    <label class="full">Autor<input id="b-autor" value="${esc(b.autor)}"></label>
+    <label>Estante<input id="b-ubicacion" list="dl-est" required value="${esc(b.ubicacion)}" placeholder="BUH-C1-B1"><span class="hint" id="codeHint" hidden>Formato: BUH-C1-B1, SAL-B1 o DES-B1</span></label>
+    <label>Idioma<select id="b-idioma">${IDIOMAS.map(v=>`<option${v===b.idioma?" selected":""}>${v}</option>`).join("")}</select></label>
+    <label>Bloque<input id="b-bloque" list="dl-bl" value="${esc(b.bloque)}"></label>
+    <label>Ámbito<input id="b-ambito" list="dl-am" value="${esc(b.ambito)}"></label>
+    <label>País del autor<input id="b-pais" list="dl-pa" value="${esc(b.pais)}"></label>
+    <label class="check"><input type="checkbox" id="b-leido"${b.leido?" checked":""}>Leído</label>
+    <label>Prestado a<input id="b-prestadoA" value="${esc(b.prestadoA||"")}" placeholder="Nadie"></label>
+    <label>Desde<input id="b-prestadoDesde" type="date" value="${esc(b.prestadoDesde||"")}"></label>
+    <label class="check"><input type="checkbox" id="b-firmado"${b.firmado?" checked":""}>Firmado por el autor</label>
+    <label class="full">Notas<textarea id="b-notas" rows="2">${esc(b.notas||"")}</textarea></label>
+    ${dl("dl-est",[...shelves.keys()].sort(cmpCode))}${dl("dl-bl",uniq([...BLOQUES,...books.map(x=>x.bloque)]))}${dl("dl-am",uniq([...AMBITOS,...books.map(x=>x.ambito)]))}${dl("dl-pa",uniq(books.map(x=>x.pais)))}
+    <div class="acts full">${id?`<button type="button" class="danger" id="bDel">Borrar</button>`:""}<span style="flex:1"></span><button type="button" id="bCancel">Cancelar</button><button class="primary" type="submit">Guardar</button></div>
+  </form>`);
+  $("#bCancel").onclick=closeSheet;
+  const ub=$("#b-ubicacion");ub.oninput=()=>{ub.value=ub.value.toUpperCase();$("#codeHint").hidden=!ub.value||CODE_RE.test(ub.value)};
+  if($("#bDel")){let armed=false;$("#bDel").onclick=async()=>{if(!armed){armed=true;$("#bDel").textContent="Confirmar borrado";return}closeSheet();await deleteBook(code,id);toast("Libro borrado")}}
+  $("#b-prestadoA").oninput=e=>{if(e.target.value&&!$("#b-prestadoDesde").value)$("#b-prestadoDesde").value=new Date().toISOString().slice(0,10)};
+  $("#bf").onsubmit=async e=>{
+    e.preventDefault();
+    const v=k=>$("#b-"+k).value.trim();
+    const code2=v("ubicacion").toUpperCase();
+    if(!CODE_RE.test(code2)){$("#codeHint").hidden=false;ub.focus();return}
+    const nb={id:b.id,titulo:v("titulo"),autor:v("autor"),ubicacion:code2,bloque:v("bloque"),ambito:v("ambito"),pais:v("pais"),idioma:$("#b-idioma").value,leido:$("#b-leido").checked,firmado:$("#b-firmado").checked,prestadoA:v("prestadoA"),prestadoDesde:v("prestadoA")?v("prestadoDesde"):"",notas:v("notas")};
+    if(b.excepcion&&code2===b.ubicacion&&nb.pais===b.pais&&nb.ambito===b.ambito)nb.excepcion=true;
+    closeSheet();await saveBook(id?code:null,nb);
+    const m=misplaced(nb);toast(m?"Guardado. Ojo: no encaja en "+code2:(id?"Guardado":"Libro añadido"));
+  };
+}
+
+function openShelf(code){
+  const s=shelves.get(code),books=allBooks();
+  sheet(`<h3>Estante ${esc(code)}</h3><p class="ro" style="margin:0">Qué se espera en esta balda. Si un libro no encaja, se marca como fuera de sitio. Deja un campo vacío para no comprobarlo.</p>
+  <form class="form" id="sf"><label class="full">Ámbitos (separados por comas)<input id="s-ambitos" value="${esc((s.ambitos||[]).join(", "))}" placeholder="Latinoamericana"></label>
+  <label class="full">Países (separados por comas)<input id="s-paises" value="${esc((s.paises||[]).join(", "))}" placeholder="Chile, Argentina"></label>
+  <div class="acts full"><button type="button" id="sCancel">Cancelar</button><button class="primary" type="submit">Guardar</button></div></form>`);
+  $("#sCancel").onclick=closeSheet;
+  $("#sf").onsubmit=async e=>{e.preventDefault();const sp=x=>x.split(",").map(t=>t.trim()).filter(Boolean);s.ambitos=sp($("#s-ambitos").value);s.paises=sp($("#s-paises").value);closeSheet();render();await writeShelf(code);toast("Estante guardado")};
+}
+
+/* ---------- wiring ---------- */
+let qt;$("#q").addEventListener("input",e=>{clearTimeout(qt);qt=setTimeout(()=>{S.q=e.target.value;S.limit=150;if(S.view!=="libros")setView("libros");else render()},120)});
+$("#tab-libros").onclick=()=>setView("libros");
+$("#tab-estantes").onclick=()=>setView("estantes");
+$("#tab-avisos").onclick=()=>setView("avisos");
+$("#tab-stats").onclick=()=>setView("stats");
+$("#addBtn").onclick=()=>openBook(null,null);
+render();
+
+(async()=>{
+  try{
+    const r=await fetch("biblioteca.json",{cache:"no-store"});
+    const j=await r.json();
+    for(const [code,x] of Object.entries(j.estantes||{}))shelves.set(code,{ambitos:x.ambitos||[],paises:x.paises||[],libros:x.libros||[]});
+    loaded=true;render();
+    const u=document.getElementById("upd");if(u&&j.exportado)u.textContent="Actualizado el "+j.exportado.split("-").reverse().join("/");
+  }catch(e){$("#stats").textContent="No se pudo cargar el catálogo";}
+})();
+})();
+</script>
+
+</body>
+</html>
