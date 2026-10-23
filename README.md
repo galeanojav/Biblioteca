@@ -3,7 +3,7 @@
 Catálogo de mis libros con el estante donde está cada uno.
 
 - **Consulta:** abre `index.html` (o la página de GitHub Pages de este repositorio).
-- **Datos:** `biblioteca.json` (completo, por estantes) y `biblioteca.csv` (para Excel).
+- **Datos:** `biblioteca.json` (completo, por estantes).
 
 ## Códigos de estante
 
